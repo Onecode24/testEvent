@@ -20,6 +20,8 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 import Database from '@ioc:Adonis/Lucid/Database'
+import Event from 'App/Models/Event'
+import {EventValidator , EventUpdate} from 'App/Validators/EventValidator'
 
 
 Route.get('/', async () => {
@@ -28,24 +30,9 @@ Route.get('/', async () => {
 
 Route.post('/newevent',async ({request}) =>{
 
-  let req = request.body();
-  let n =new Date();
+  const eventInfo = await request.validate(EventValidator)
 
-  Database.insertQuery()
-  await Database
-  .table('events')
-  .returning('id')
-  .insert({
-    eventName : req.eventName,
-    description : req.description,
-    prix : req.prix,
-    lieu : req.lieu,
-    date : req.date,
-    heure : req.heure,
-    'lien images' : req.liens ,
-    contact : req.contact,
-    created_at: n.toString()
-  })
+  await Event.create(eventInfo)
 
   return{
     event : "Evenement enregister"
@@ -57,7 +44,33 @@ Route.get('/events', async ()=>{
   return Database
   .from('events')
   .select('*')
-  .orderBy('prix')
+  .orderBy('date')
   .as('last_login_ip')
 
+})
+
+Route.get('/event/:id', async ({params})=>{
+  return Database
+  .from('events')
+  .where('id',params.id)
+})
+
+Route.post('/event/:id', async ({request , params})=>{
+
+  const updateInfo = await request.validate(EventUpdate);
+
+  let a = await Database
+  .from('events')
+  .where('id',params.id)
+  .update(updateInfo)
+
+  if("1" == a.toString()){
+      return {
+        status : "Successfully update"
+      }
+  }else{
+    return {
+      status : "Event not exist"
+    }
+  }
 })
